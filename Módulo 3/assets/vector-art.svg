@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#0ea5e9" />
+    </linearGradient>
+    <radialGradient id="circleGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgGradient)" />
+  <circle cx="240" cy="220" r="110" fill="#f8fafc" fill-opacity="0.08" />
+  <circle cx="240" cy="220" r="240" fill="url(#circleGlow)" />
+  <g transform="translate(460 320)">
+    <path d="M-140 20 C-80 -140 80 -160 140 20 C80 80 -80 60 -140 20Z" fill="#38bdf8" opacity="0.95" />
+    <path d="M-90 20 C-40 -90 40 -100 90 20 C40 60 -40 50 -90 20Z" fill="#0ea5e9" opacity="0.85" />
+  </g>
+  <rect x="80" y="380" width="640" height="140" rx="30" fill="#0f172a" fill-opacity="0.65" />
+  <text x="120" y="440" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">Arte Vetorial</text>
+  <text x="120" y="490" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="20">SVG com formas escaláveis e cores modernas</text>
+</svg>

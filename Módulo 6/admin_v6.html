@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração de Participantes - Módulo 6</title>
+    <link rel="stylesheet" href="form_tabela.css">
+</head>
+<body>
+    <h1>Administração de Participantes</h1>
+    
+    <h2>Lista de Participantes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do Participante</th>
+                <th>Email</th>
+                <th>Telefone</th>
+                <th>Status de Pagamento</th>
+                <th>Data</th>
+                <th>Horário</th>
+            </tr>
+        </thead>
+        <tbody id="participants-body">
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="7" id="table-footer">Lista atualizada em Janeiro de 2024</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    
+    <form id="cadastroForm" action="#" method="POST" onsubmit="return false;">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required>
+
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="telefone">Telefone:</label>
+        <input type="tel" id="telefone" name="telefone" required>
+
+        <label>Nível:</label>
+        <input type="radio" id="basico" name="nivel" value="Básico">
+        <label for="basico">Básico</label>
+
+        <input type="radio" id="intermediario" name="nivel" value="Intermediário">
+        <label for="intermediario">Intermediário</label>
+
+        <input type="radio" id="avancado" name="nivel" value="Avançado">
+        <label for="avancado">Avançado</label>
+
+        <button type="submit">Enviar Dados</button>
+    </form>
+    <script>
+    (function(){
+        const form = document.getElementById('cadastroForm');
+        const participantsBody = document.getElementById('participants-body');
+        const tableFooter = document.getElementById('table-footer');
+
+        function load(){
+            try { return JSON.parse(localStorage.getItem('admin_cadastros')||'[]'); }
+            catch(e){ return []; }
+        }
+        function save(arr){ localStorage.setItem('admin_cadastros', JSON.stringify(arr)); }
+
+        const defaultParticipants = [
+            {id:'001', nome:'João Silva', email:'joao.silva@email.com', telefone:'(11) 99999-9999', status:'Pago', data:'01/01/2024', horario:'09:00'},
+            {id:'002', nome:'Maria Santos', email:'maria.santos@email.com', telefone:'(21) 99999-9999', status:'Pendente', data:'02/01/2024', horario:'10:00'},
+            {id:'003', nome:'Carlos Oliveira', email:'carlos.oliveira@email.com', telefone:'(31) 99999-9999', status:'Pago', data:'03/01/2024', horario:'11:00'}
+        ];
+
+        function escapeHtml(value){
+            return String(value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function render(){
+            const saved = load();
+            participantsBody.innerHTML = '';
+
+            defaultParticipants.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.id}</td><td>${escapeHtml(item.nome)}</td><td>${escapeHtml(item.email)}</td><td>${escapeHtml(item.telefone)}</td><td>${escapeHtml(item.status)}</td><td>${escapeHtml(item.data)}</td><td>${escapeHtml(item.horario)}</td>`;
+                participantsBody.appendChild(row);
+            });
+
+            saved.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${escapeHtml(item.id)}</td><td>${escapeHtml(item.nome)}</td><td>${escapeHtml(item.email)}</td><td>${escapeHtml(item.telefone)}</td><td>${escapeHtml(item.status)}</td><td>${escapeHtml(item.data)}</td><td>${escapeHtml(item.horario)}</td>`;
+                participantsBody.appendChild(row);
+            });
+
+            if (Array.isArray(saved) && saved.length > 0){
+                const last = saved[saved.length - 1];
+                const date = last.data || new Date(last.createdAt || Date.now()).toLocaleDateString('pt-BR');
+                const time = last.horario || new Date(last.createdAt || Date.now()).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                const name = last.nome || 'Último participante';
+                if (tableFooter) tableFooter.textContent = `Lista atualizada em ${date} às ${time} — Último cadastro: ${name}`;
+            } else {
+                if (tableFooter) tableFooter.textContent = 'Lista atualizada em Janeiro de 2024';
+            }
+        }
+
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => data[key] = value.trim());
+            if (!data.nivel){
+                alert('Selecione um nível.');
+                return;
+            }
+            const saved = load();
+            const now = new Date();
+            const id = String(defaultParticipants.length + saved.length + 1).padStart(3, '0');
+            const participant = {
+                id: id,
+                nome: data.nome || '',
+                email: data.email || '',
+                telefone: data.telefone || '',
+                nivel: data.nivel || '',
+                status: 'Pendente',
+                data: now.toLocaleDateString('pt-BR'),
+                horario: now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
+                createdAt: now.toISOString()
+            };
+            saved.push(participant);
+            save(saved);
+            render();
+            form.reset();
+        });
+
+        render();
+    })();
+    </script>
+</body>
+</html>

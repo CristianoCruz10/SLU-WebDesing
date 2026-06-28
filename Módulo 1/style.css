@@ -1,0 +1,76 @@
+/* Estilos Gerais */
+body {
+    background-color: #E0F7FA;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Contenedor Principal */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Conteúdo Principal */
+.conteudo-principal {
+    flex: 1 1 480px;
+    max-width: 760px;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Conteúdo Lateral */
+.conteudo-lateral {
+    flex: 0 0 320px;
+    min-height: 320px;
+    padding: 24px;
+    color: #ffffff;
+    background-image: url('fundo_natureza.png');
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Título Principal */
+h1 {
+    color: #2C3E50;
+    font-size: 48px;
+    margin-top: 0;
+}
+
+/* Imagem */
+img {
+    border: 5px solid #5D4037;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    display: block;
+    margin: 20px 0;
+    border-radius: 12px;
+}
+
+/* Links */
+a {
+    color: #2C3E50;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Parágrafo */
+p {
+    color: #2C3E50;
+    line-height: 1.6;
+}

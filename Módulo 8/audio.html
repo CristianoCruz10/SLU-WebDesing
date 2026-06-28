@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Áudio Digital - Projeto Final</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Áudio Digital</h1>
+      <p>Arquivo de áudio incorporado ao site com o elemento HTML de reprodução.</p>
+    </header>
+    <section class="content">
+      <article>
+        <h2>Detalhes do projeto</h2>
+        <p>Este arquivo apresenta o segundo movimento da Sinfonia nº 7 de Ludwig van Beethoven. Ele foi incorporado como exemplo de áudio em página web, com controles nativos do navegador.</p>
+        <div class="audio-player">
+          <audio controls>
+            <source src="assets/Beethoven - Symphony No.7 in A major op.92 - II, Allegretto - neuIlaryRheinKlange (youtube).mp3" type="audio/mp3">
+            Seu navegador não suporta reprodução de áudio.
+          </audio>
+        </div>
+      </article>
+      <article>
+        <aside class="dialog" role="group" aria-label="Link para o arquivo de áudio">
+          <div class="dialog-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 14.5V7l5 4.5-5 5z" fill="#06b6d4"/>
+            </svg>
+          </div>
+          <div class="dialog-body">
+            <p>A referência do áudio está disponível em <a href="https://www.youtube.com/watch?v=vCHREyE5GzQ&list=RDvCHREyE5GzQ&start_radio=1" target="_blank" class="external-link" rel="noreferrer">youtube.com</a>.</p>
+            <p class="muted">A fonte foi declarada para manter transparência e integridade acadêmica.</p>
+          </div>
+        </aside>
+        <p>O player usa o elemento <code>&lt;audio controls&gt;</code>, permitindo reproduzir, pausar e ajustar o áudio diretamente no navegador.</p>
+      </article>
+      <article>
+        <a href="index.html" class="button">Voltar para o menu</a>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

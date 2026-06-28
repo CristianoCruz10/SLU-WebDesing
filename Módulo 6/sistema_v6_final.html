@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Administração de Participantes - Versão Final</title>
+    <link rel="stylesheet" href="form_tabela.css">
+</head>
+<body>
+    <!--
+        COMENTÁRIO SOBRE O ATRIBUTO method="POST":
+        
+        O atributo method="POST" no formulário é fundamental para a segurança dos dados. 
+        Diferentemente do método GET, que envia os dados pela URL (visíveis e limitados), 
+        o POST envia os dados no corpo da requisição HTTP, de forma oculta. Isso é importante
+        porque:
+        
+        1. Privacidade: Dados sensíveis (senhas, e-mails) não aparecem na barra de endereços
+        2. Capacidade: Permite enviar grandes volumes de dados
+        3. Segurança: Reduz exposição a ataques por manipulação de URL
+        4. Cache: Os dados POST não ficam armazenados no histórico do navegador
+        
+        Portanto, sempre use POST para dados importantes e sensíveis.
+    -->
+    
+    <div class="container">
+    <h1>Sistema de Administração de Participantes</h1>
+    
+    <h2>Lista de Participantes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do Participante</th>
+                <th>E-mail</th>
+                <th>Telefone</th>
+                <th>Status de Pagamento</th>
+                <th>Data</th>
+                <th>Horário</th>
+            </tr>
+        </thead>
+        <tbody id="participants-body">
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="7" id="table-footer">Lista atualizada em Janeiro de 2024</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div style="margin:16px 0;">
+        <button id="open-form" class="btn-primary">Cadastrar Novo Participante</button>
+        <button id="toggle-submissions" class="toggle-btn">Visualizar cadastros locais</button>
+    </div>
+
+    <!-- <h2 class="section-title">Cadastro de Novos Participantes</h2> -->
+    <div id="form-panel" class="panel" aria-hidden="true">
+        <button class="close-btn" id="close-form">×</button>
+        <form id="cadastroForm" action="#" method="POST" onsubmit="return false;">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required>
+
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="telefone">Telefone:</label>
+        <input type="tel" id="telefone" name="telefone" required>
+
+        <label for="nivel">Nível:</label>
+        <div class="radio-group" id="nivel">
+            <div class="radio-item">
+                <input type="radio" id="basico" name="nivel" value="Básico">
+                <label for="basico">Básico</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="intermediario" name="nivel" value="Intermediário">
+                <label for="intermediario">Intermediário</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="avancado" name="nivel" value="Avançado">
+                <label for="avancado">Avançado</label>
+            </div>
+        </div>
+
+            <div style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+                <button type="submit">Enviar Dados</button>
+                <button type="button" id="cancel-form">Cancelar</button>
+            </div>
+            <div id="form-message" aria-live="polite"></div>
+        </form>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <section id="local-exports" class="hidden" style="margin-top:18px;">
+        <h3>Cadastros locais</h3>
+        <div id="submissions" style="margin-bottom:12px">Carregando...</div>
+        <button id="download-csv" class="download-btn" style="display:none">Baixar CSV</button>
+    </section>
+
+    <script>
+    (function(){
+        const form = document.getElementById('cadastroForm');
+        const msg = document.getElementById('form-message');
+        const list = document.getElementById('submissions');
+        const downloadBtn = document.getElementById('download-csv');
+        const participantsBody = document.getElementById('participants-body');
+
+        function load(){
+            try { return JSON.parse(localStorage.getItem('cadastros')||'[]'); }
+            catch(e){ return []; }
+        }
+        function save(arr){ localStorage.setItem('cadastros', JSON.stringify(arr)); }
+
+        // Migra cadastros antigos (sem id/data/horario) para o novo formato
+        function migrateSaved(){
+            const arr = load();
+            if (!Array.isArray(arr) || arr.length === 0) return;
+            let changed = false;
+            const now = new Date();
+            for (let i = 0; i < arr.length; i++){
+                const item = arr[i] || {};
+                
+                if (!item.createdAt){ item.createdAt = now.toISOString(); changed = true; }
+                if (!item.data){
+                    const d = new Date(item.createdAt || now.toISOString());
+                    item.data = d.toLocaleDateString('pt-BR');
+                    item.horario = d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                    changed = true;
+                }
+          
+                if (!item.id){
+                    const idNum = defaultParticipants.length + i + 1;
+                    item.id = String(idNum).padStart(3,'0');
+                    changed = true;
+                }
+                arr[i] = item;
+            }
+            if (changed) save(arr);
+        }
+
+        // valores ficticios exibidos na tabela inicial
+        const defaultParticipants = [
+            {id:'001', nome: 'João Silva', email: 'joao.silva@email.com', telefone: '(11) 99999-9999', status: 'Pago', data: '10/01/2024', horario: '09:30'},
+            {id:'002', nome: 'Maria Santos', email: 'maria.santos@email.com', telefone: '(21) 99999-9999', status: 'Pendente', data: '12/01/2024', horario: '11:00'},
+            {id:'003', nome: 'Carlos Oliveira', email: 'carlos.oliveira@email.com', telefone: '(31) 99999-9999', status: 'Pago', data: '15/01/2024', horario: '14:15'}
+        ];
+
+        function escapeCsv(s){ if(s==null) return ''; if(typeof s!=='string') s = String(s); if(s.includes(',')||s.includes('"')||s.includes('\n')) return '"'+s.replace(/"/g,'""')+'"'; return s; }
+
+        function render(){
+            const arr = load();
+            list.innerHTML = '';
+            if(arr.length===0){ list.innerHTML = '<p>Nenhum cadastro ainda.</p>'; downloadBtn.style.display='none'; }
+            else { downloadBtn.style.display='inline-block'; arr.forEach((o,i)=>{
+                const div = document.createElement('div');
+                div.className = 'submission';
+                div.textContent = (i+1)+'. ' + (o.nome||'—') + ' — ' + (o.email||'—') + ' — ' + (o.telefone||'—') + ' — ' + (o.nivel||'—');
+                list.appendChild(div);
+            }); }
+            renderParticipants();
+        }
+
+        const tableFooter = document.getElementById('table-footer');
+
+        function renderParticipants(){
+            const saved = load() || [];
+            const normalized = saved.map((s, idx) => ({
+                id: s.id || String(defaultParticipants.length + idx + 1).padStart(3,'0'),
+                nome: s.nome || s.name || '',
+                email: s.email || '',
+                telefone: s.telefone || s.phone || '',
+                status: s.status || 'Pendente',
+                data: s.data || s.dataCadastro || '--',
+                horario: s.horario || s.horarioCadastro || '--',
+                nivel: s.nivel || ''
+            }));
+
+            participantsBody.innerHTML = '';
+            defaultParticipants.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${p.id}</td><td>${p.nome}</td><td>${p.email}</td><td>${p.telefone}</td><td>${p.status}</td><td>${p.data}</td><td>${p.horario}</td>`;
+                participantsBody.appendChild(tr);
+            });
+
+            normalized.forEach(p => {
+                const tr = document.createElement('tr');
+                const tdId = document.createElement('td'); tdId.textContent = p.id;
+                const tdName = document.createElement('td'); tdName.textContent = p.nome;
+                const tdEmail = document.createElement('td'); tdEmail.textContent = p.email;
+                const tdPhone = document.createElement('td'); tdPhone.textContent = p.telefone;
+                const tdStatus = document.createElement('td');
+                const tdDate = document.createElement('td'); tdDate.textContent = p.data;
+                const tdTime = document.createElement('td'); tdTime.textContent = p.horario;
+                const span = document.createElement('span');
+                span.textContent = p.status || 'Pendente';
+                span.className = (p.status === 'Pago') ? 'status-paid' : 'status-pendente';
+                tdStatus.appendChild(span);
+
+                if (p.status !== 'Pago'){
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'mark-paid-btn';
+                    btn.textContent = 'Marcar como Pago';
+                    btn.dataset.id = p.id;
+                    btn.addEventListener('click', function(){
+                        const arrSaved = load();
+                        const idx = arrSaved.findIndex(x => x.id === p.id);
+                        if (idx !== -1){
+                            arrSaved[idx].status = 'Pago';
+                            save(arrSaved);
+                            render();
+                        }
+                    });
+                    tdStatus.appendChild(btn);
+                }
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdName);
+                tr.appendChild(tdEmail);
+                tr.appendChild(tdPhone);
+                tr.appendChild(tdStatus);
+                tr.appendChild(tdDate);
+                tr.appendChild(tdTime);
+                participantsBody.appendChild(tr);
+            });
+
+            const savedArr = load();
+            if (Array.isArray(savedArr) && savedArr.length > 0){
+                const last = savedArr[savedArr.length - 1];
+                const d = last.data || (new Date(last.createdAt || Date.now())).toLocaleDateString('pt-BR');
+                const t = last.horario || (new Date(last.createdAt || Date.now())).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                const name = last.nome || last.name || '';
+                if (tableFooter) tableFooter.textContent = (name ? `Lista atualizada em ${d} às ${t} — Último cadastro: ${name}` : `Lista atualizada em ${d} às ${t}`);
+            } else {
+                if (tableFooter) tableFooter.textContent = 'Lista atualizada em Janeiro de 2024';
+            }
+        }
+
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            msg.textContent = '';
+            const data = new FormData(form);
+            const obj = {};
+            data.forEach((v,k)=> obj[k]=v);
+            if(!obj.nivel){ msg.textContent = 'Selecione um nível.'; msg.style.color = '#c0392b'; return; }
+
+            const arr = load();
+            // Gerar data, hora e id
+            const now = new Date();
+            const date = now.toLocaleDateString('pt-BR');
+            const time = now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            const nextId = String(defaultParticipants.length + arr.length + 1).padStart(3,'0');
+
+            const participant = {
+                id: nextId,
+                nome: obj.nome || '',
+                email: obj.email || '',
+                telefone: obj.telefone || '',
+                nivel: obj.nivel || '',
+                data: date,
+                horario: time,
+                createdAt: new Date().toISOString(),
+                status: 'Pendente'
+            };
+
+            arr.push(participant);
+            save(arr);
+            render();
+            msg.textContent = 'Resposta do servidor: 200 OK — Cadastro registrado com sucesso!';
+            msg.style.color = '#16a085';
+            form.reset();
+        });
+
+        downloadBtn.addEventListener('click', function(){
+            const arr = load(); if(arr.length===0) return;
+            const header = 'id,nome,email,telefone,nivel,data,horario,status';
+            const rows = arr.map(o => [escapeCsv(o.id||''), escapeCsv(o.nome), escapeCsv(o.email), escapeCsv(o.telefone||''), escapeCsv(o.nivel), escapeCsv(o.data||''), escapeCsv(o.horario||''), escapeCsv(o.status||'')].join(','));
+            const csv = [header].concat(rows).join('\n');
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'cadastros.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        });
+
+        // inicializa: migra dados antigos e renderiza
+        migrateSaved();
+        render();
+
+        // UI controls: abrir/fechar painel do formulário e alternar visualização
+        const openBtn = document.getElementById('open-form');
+        const closeBtn = document.getElementById('close-form');
+        const cancelBtn = document.getElementById('cancel-form');
+        const panel = document.getElementById('form-panel');
+        const overlayEl = document.getElementById('overlay');
+        const toggleSubBtn = document.getElementById('toggle-submissions');
+        const localExports = document.getElementById('local-exports');
+
+        function openPanel(){
+            panel.classList.add('open');
+            panel.setAttribute('aria-hidden','false');
+            overlayEl.classList.add('show');
+            const nameInput = document.getElementById('nome'); if(nameInput) nameInput.focus();
+        }
+        function closePanel(){
+            panel.classList.remove('open');
+            panel.setAttribute('aria-hidden','true');
+            overlayEl.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openPanel);
+        if(closeBtn) closeBtn.addEventListener('click', closePanel);
+        if(cancelBtn) cancelBtn.addEventListener('click', closePanel);
+        if(overlayEl) overlayEl.addEventListener('click', closePanel);
+
+        if(toggleSubBtn){
+            toggleSubBtn.addEventListener('click', function(){
+                if(localExports.classList.contains('hidden')){
+                    localExports.classList.remove('hidden');
+                    toggleSubBtn.textContent = 'Ocultar cadastros locais';
+                } else {
+                    localExports.classList.add('hidden');
+                    toggleSubBtn.textContent = 'Visualizar cadastros locais';
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>
